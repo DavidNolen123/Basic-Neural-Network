@@ -1,0 +1,178 @@
+#my final attempt
+
+
+import random
+import numpy as np
+import math
+import tensorflow as tf
+from tensorflow.keras.datasets import mnist
+
+
+(trainImage, trainLabel), (testImage, testLabel) = mnist.load_data()
+
+#make np arrays
+trainImage = np.array(trainImage)
+#the labels are just lists of the numbers that the images are of
+testImage = np.array(testImage)
+
+Y_dev = testLabel
+X_dev = testImage
+
+Y_train = trainLabel
+X_train = trainImage
+
+
+reformatted = np.zeros((60000,784))
+localRow = []
+counter = 0;
+for image in trainImage:#(s)
+    for row in image:#(image)
+        for item in row:
+            localRow.append(item)            
+    reformatted[counter] = localRow
+    localRow = []
+    counter += 1
+
+X_train = reformatted
+print(X_train[0].shape)
+#makes groups of 784row * 1colm matrixes 
+      
+def init_params():
+    #weights for fiirst layer
+    W1 = np.random.rand(10,784) - 0.5 #between -0.5 and 0.5
+    b1 = np.random.rand(10,1) - 0.5
+    W2 = np.random.rand(10,10) - 0.5
+    b2 = np.random.rand(10,1) - 0.5
+    return W1, b1, W2, b2
+
+
+#ACTIVATION FUNCTIONS
+def ReLU(Z):
+    return np.maximum(0, Z)
+
+def deriv_ReLU(z):
+    return z > 0;
+
+def sigmoid(z):
+    """The sigmoid function."""
+
+    z = z/(max(abs(z)))
+
+    return 1.0/(1.0+np.exp(-z))
+
+
+def sigmoid_prime(z):
+    """Derivative of the sigmoid function."""
+    return sigmoid(z)*(1-sigmoid(z))
+
+
+
+def softmax(z):#not exactly sure how this one works
+    A = np.exp(z) / sum(np.exp(z))
+
+    
+    return A
+
+
+def forward_prop(W1, b1, W2, b2, X): #applying everything forwards
+    #calculate that value
+    #where X is a 784 by 1 of the pixels, need to figure out how to do that part
+
+    
+    Z1 = W1.dot(X) + b1
+    '''print("Z1")
+    print(Z1.shape)'''
+    
+    A1 = ReLU(Z1)
+    '''print("A2")
+    #print(A1)'''
+    
+    Z2 = W2.dot(A1) + b2
+    #print(Z2)
+    A2 = sigmoid(Z2)
+    
+
+    return Z1, A1, Z2, A2
+
+
+def one_hot(Y):
+    #creating a matrix like so: [0,0,1,0....0] , in that case, the label is "2"
+    #Y is the labeling set
+    one_hot_Y = np.zeros((Y.size, 10))#Y.max() + 1))#+1 bc we are starting w/ 0 as digit
+    one_hot_Y[np.arange(Y.size), Y] = 1
+    one_hot_Y = one_hot_Y.T #transposed
+    #go to that row, and for that row val (0-9), set that one = TO Y (0-9)
+    #each collumn is the onehot for each image I think
+
+    return one_hot_Y
+
+    
+
+def back_prop(Z1, A1, Z2, A2, W2, X, Y):
+    m = Y.size #size of Y, labels
+    
+    one_hot_Y = one_hot(Y)
+    dZ2 = A2 - one_hot_Y # error I think? Why not error squared??
+    dW2 = 1 / m * dZ2.dot(A1.T) # a learning rate 1/m proportional to size??
+    db2 = 1 / m * np.sum(dZ2)#what is the 2 for?
+    dZ1 = W2.T.dot(dZ2) * deriv_ReLU(Z1)
+    dW1 = 1/ m * dZ1.dot(X.T)
+    db1 = 1 / m * np.sum(dZ1)
+
+    return dW1, db1, dW2, db2
+
+def update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha):#here is alpha the learning rate
+    W1 = W1 - alpha * dW1
+    b1 = b1 - alpha * db1
+    W2 = W2 - alpha * dW2
+    b2 = b2 - alpha * db2
+
+    return W1, b1, W2, b2
+
+#25:10
+
+
+def get_predictions(A2):
+    return np.argmax(A2, 0)
+
+def get_accuracy(predictions, Y):
+    #print(predictions, Y)
+    return np.sum(predictions == Y) / Y.size
+
+def gradient_descent(X, Y, iterations, alpha):
+    W1, b1, W2, b2 = init_params()
+    for i in range(iterations):
+
+        imageMatrix = X[i][:,np.newaxis]
+        
+        Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, imageMatrix)#individual images
+
+        '''print(A2)
+        print("Z2 above")
+        print(one_hot(Y[i]))
+        print("one hot above")
+        '''
+
+        dW1, db1, dW2, db2 = back_prop(Z1, A1, Z2, A2, W2, imageMatrix, Y[i])
+        W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha)
+
+
+        
+        #progress updates
+        if i % 200 == 0:
+            print("Iteration: ", i)
+            print("Accuracy: ", get_accuracy(get_predictions(A2), Y))
+        
+    #return W1, b1, W2, b2
+    
+
+gradient_descent(X_train, Y_train, 40000, 0.1)#500 iterations
+
+
+    
+    
+
+    
+
+
+    
