@@ -6,9 +6,39 @@ import numpy as np
 import math
 import tensorflow as tf
 from tensorflow.keras.datasets import mnist
-print("here0")
+
+import PIL
+from PIL import Image
+
+#my data set
+myTest = Image.open(r"C:\Users\david\OneDrive\Pictures\Screenshots\whiteout3.png")
+#myTest.resize(100,100)
+
+def prepare_personal_sample(file):
+    image = Image.open(file)
+
+    MNIST_size = (28, 28)
+    image = image.resize(MNIST_size)
+
+    image = image.convert('L')#greyscale
+
+    pixelVal_list = list(image.getdata())#length of 784
+
+    for i in range(len(pixelVal_list)):
+        pixelVal_list[i] = np.abs(pixelVal_list[i] - 255)#final color invert
+    
+    image_array = np.array(pixelVal_list)
+
+    return image_array
+    
+
+image3array = prepare_personal_sample(r"C:\Users\david\OneDrive\Pictures\Screenshots\whiteout3.png")
+image4array = prepare_personal_sample(r"C:\Users\david\OneDrive\Pictures\Screenshots\whiteout4.png")
+image8array = prepare_personal_sample(r"C:\Users\david\OneDrive\Pictures\Screenshots\whiteout8.png")
+
 
 (trainImage, trainLabel), (testImage, testLabel) = mnist.load_data()
+
 
 #make np arrays
 trainImage = np.array(trainImage)
@@ -21,7 +51,7 @@ X_dev = testImage
 Y_train = trainLabel
 X_train = trainImage
 
-print("here1")
+#REFORMATTING TRAINING IMAGES
 reformatted = np.zeros((60000,784))
 localRow = []
 counter = 0;
@@ -35,6 +65,27 @@ for image in trainImage:#(s)
 
 X_train = reformatted
 X_train = X_train / 255
+
+
+#REFORMATTING TESTING IMAGES
+reformattedTest = np.zeros((60000,784))
+localRowTest = []
+counterTest = 0;
+for imageTest in testImage:#(s)
+    for rowTest in imageTest:#(image)
+        for itemTest in rowTest:
+            localRowTest.append(itemTest)   #scalling it down, so a 255 would = 1         
+    reformattedTest[counterTest] = localRowTest
+    localRowTest = []
+    counterTest += 1
+
+X_dev = reformattedTest
+X_dev = X_dev / 255
+'''End dev format'''
+
+
+
+
 
 print(X_train[0].shape)
 #makes groups of 784row * 1colm matrixes 
@@ -159,22 +210,83 @@ def gradient_descent(X, Y, iterations, alpha):
         W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha)
         
         #progress updates
-        if i % 500 == 0:
+        if i % 5000 == 0:
             print("Iteration: ", i)
             print("Accuracy: ", get_accuracy(get_predictions(A2), Y[i]))
             print("Prediction", get_predictions(A2))
+            print("Actual", Y[i])
         
-    #return W1, b1, W2, b2
+    return W1, b1, W2, b2
             #work on getPredictions)
     
 
-gradient_descent(X_train, Y_train, 50000, 0.1)#500 iterations
+W1, b1, W2, b2 = gradient_descent(X_train, Y_train, 50000, 0.1)#500 iterations
 
 
+def test_image(Xtest, Ytest, index):
+    imageMatrix = Xtest[index][:,np.newaxis]
+        
+    Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, imageMatrix)#individual images
+
+    print(A2)
+    print("AZ above")
+    print(one_hot(Ytest[index]))
+    print("one hot above")  
+
+    print("image number: ", index)
+    #print("Accuracy: ", get_accuracy(get_predictions(A2), Y[i]))
+    print("Prediction", get_predictions(A2))
+    #print("Actual", Ytest[index])
     
+def test_image_individual_upload(Xtest):
+    imageMatrix = Xtest[:,np.newaxis]
+        
+    Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, imageMatrix)#individual images
+
+    '''print(A2)
+    print("AZ above")
+    print(one_hot(Ytest[index]))
+    print("one hot above")  '''
+
+    #print("image number: ", index)
+    #print("Accuracy: ", get_accuracy(get_predictions(A2), Y[i]))
+    print("Prediction for uploaded image", get_predictions(A2))
+    #print("Actual", Ytest[index])
+
+
+#test_image(X_dev, Y_dev, 1)
+#test_image(X_dev, Y_dev, 2)
+#test_image(X_dev, Y_dev, 200)
     
 
+def find_test_image_accuracy(Xtest, Ytest, sizeOfTest, atot):
     
+    for i in range(sizeOfTest):
+
+        imageMatrix = Xtest[i][:,np.newaxis]
+        
+        Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, imageMatrix)#individual images
+
+        atot = atot + get_accuracy(get_predictions(A2), Ytest[i])
+        
+        
+    return (atot / sizeOfTest)
+
+accTot = 0.0
+
+acc = find_test_image_accuracy(X_dev, Y_dev, 5000, accTot)
+    
+print(acc)
+
+print("BIG TEST BELOW!")
+print("Testing a 3")
+test_image_individual_upload(image3array)
+print("Testing a 4")
+test_image_individual_upload(image4array)
+print("Testing an 8")
+test_image_individual_upload(image8array)
 
 
-    
+
+
+
