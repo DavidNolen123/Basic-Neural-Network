@@ -6,7 +6,7 @@ import numpy as np
 import math
 import tensorflow as tf
 from tensorflow.keras.datasets import mnist
-
+print("here0")
 
 (trainImage, trainLabel), (testImage, testLabel) = mnist.load_data()
 
@@ -21,19 +21,21 @@ X_dev = testImage
 Y_train = trainLabel
 X_train = trainImage
 
-
+print("here1")
 reformatted = np.zeros((60000,784))
 localRow = []
 counter = 0;
 for image in trainImage:#(s)
     for row in image:#(image)
         for item in row:
-            localRow.append(item)            
+            localRow.append(item)   #scalling it down, so a 255 would = 1         
     reformatted[counter] = localRow
     localRow = []
     counter += 1
 
 X_train = reformatted
+X_train = X_train / 255
+
 print(X_train[0].shape)
 #makes groups of 784row * 1colm matrixes 
       
@@ -56,7 +58,7 @@ def deriv_ReLU(z):
 def sigmoid(z):
     """The sigmoid function."""
 
-    z = z/(max(abs(z)))
+    z = z/(max(abs(z )))
 
     return 1.0/(1.0+np.exp(-z))
 
@@ -83,13 +85,14 @@ def forward_prop(W1, b1, W2, b2, X): #applying everything forwards
     '''print("Z1")
     print(Z1.shape)'''
     
-    A1 = ReLU(Z1)
+    #A1 = ReLU(Z1)
+    A1 = sigmoid(Z1) #sigmoid activation
     '''print("A2")
     #print(A1)'''
     
     Z2 = W2.dot(A1) + b2
     #print(Z2)
-    A2 = sigmoid(Z2)
+    A2 = softmax(Z2)
     
 
     return Z1, A1, Z2, A2
@@ -148,25 +151,24 @@ def gradient_descent(X, Y, iterations, alpha):
         Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, imageMatrix)#individual images
 
         '''print(A2)
-        print("Z2 above")
+        print("AZ above")
         print(one_hot(Y[i]))
-        print("one hot above")
-        '''
-
+        print("one hot above")'''
+        
         dW1, db1, dW2, db2 = back_prop(Z1, A1, Z2, A2, W2, imageMatrix, Y[i])
         W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha)
-
-
         
         #progress updates
-        if i % 200 == 0:
+        if i % 500 == 0:
             print("Iteration: ", i)
-            print("Accuracy: ", get_accuracy(get_predictions(A2), Y))
+            print("Accuracy: ", get_accuracy(get_predictions(A2), Y[i]))
+            print("Prediction", get_predictions(A2))
         
     #return W1, b1, W2, b2
+            #work on getPredictions)
     
 
-gradient_descent(X_train, Y_train, 40000, 0.1)#500 iterations
+gradient_descent(X_train, Y_train, 50000, 0.1)#500 iterations
 
 
     
