@@ -169,7 +169,9 @@ def back_prop(Z1, A1, Z2, A2, W2, X, Y):
     dZ2 = A2 - one_hot_Y # error I think? Why not error squared??
     dW2 = 1 / m * dZ2.dot(A1.T) # a learning rate 1/m proportional to size??
     db2 = 1 / m * np.sum(dZ2)#what is the 2 for?
-    dZ1 = W2.T.dot(dZ2) * deriv_ReLU(Z1)
+    #dZ1 = W2.T.dot(dZ2) * deriv_ReLU(Z1)
+    dZ1 = W2.T.dot(dZ2) * sigmoid_prime(Z1)
+    
     dW1 = 1/ m * dZ1.dot(X.T)
     db1 = 1 / m * np.sum(dZ1)
 
@@ -188,6 +190,9 @@ def update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha):#here is alpha the 
 
 def get_predictions(A2):
     return np.argmax(A2, 0)
+
+def get_confidence(A2):
+    return ((max(A2) / 1) * 100)
 
 def get_accuracy(predictions, Y):
     #print(predictions, Y)
@@ -251,6 +256,7 @@ def test_image_individual_upload(Xtest):
     #print("image number: ", index)
     #print("Accuracy: ", get_accuracy(get_predictions(A2), Y[i]))
     print("Prediction for uploaded image", get_predictions(A2))
+    print("Percent Confidence", round(get_confidence(A2)[0]))
     #print("Actual", Ytest[index])
 
 
