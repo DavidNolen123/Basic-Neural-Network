@@ -1,12 +1,5 @@
 #David's Neural Network
 
-#My lovely imports
-
-#tensor data --- cite??
-#import tensorflow as tensorflow
-#from  tensorflow.examples.tutorials.mnist import input_data
-#mnist = input_data.read_data_sets('MNIST_data/', one_hot=True) no no no
-
 import random
 import numpy as np
 
